@@ -17,6 +17,29 @@ Each finding comes with a risk level (Low / Medium / High / Critical), the exact
 
 Detection is rule-based, not model-based, so every flag traces back to something you can inspect. The LLM (Gemini) only gets used for writing prose — redlines and chat answers — never for deciding what counts as risky.
 
+## How it works
+
+```mermaid
+flowchart TD
+    A[Contract uploaded or pasted] --> B[Text extracted from .txt / .docx / .pdf]
+    B --> C[Checked against every active playbook rule]
+    C --> D{Medium+ risk found?}
+    D -- yes --> E[Gemini drafts redlines + summary\nfalls back to canned templates if no key / call fails]
+    D -- no --> F[Plain-text summary, no model call]
+    E --> G[Findings + summary saved]
+    F --> G
+    G --> H[Summary / Clauses tabs]
+    G --> I[Downloadable PDF report]
+    H --> J[Ask a question in Chat]
+    J --> K[Answered from that contract's text + findings\nGemini, falls back to keyword search]
+    H --> L[Human approves, negotiates, or escalates]
+
+    style D fill:#f5f0e6,stroke:#8a7a5c
+    style L fill:#e9f2ea,stroke:#3c7a5c
+```
+
+Detection never touches the network — it's regex against a rule table, so it's the same speed and the same answer every time. The model only shows up where the job is writing sentences, and the actual sign/negotiate/escalate call always stays with a person.
+
 ## Running it
 
 ```bash
@@ -39,7 +62,3 @@ docker-compose.yml   Postgres + backend + frontend
 ```
 
 More backend-specific notes live in [backend/README.md](backend/README.md).
-
-## What it's not
-
-Not a replacement for a lawyer on anything high-value or high-risk. Doesn't give legal advice, doesn't handle multi-party contracts or redline-diffing, doesn't integrate with a CLM or e-signature platform yet. English-language commercial contracts only.
