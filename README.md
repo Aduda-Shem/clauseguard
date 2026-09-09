@@ -1,81 +1,45 @@
 # ClauseGuard
 
-ClauseGuard turns "read this whole contract and tell me if it's safe to sign"
-into a 3-second, auditable clause-by-clause risk report — no lawyer required
-for the first pass.
+Contracts pile up faster than anyone wants to read them line by line. ClauseGuard reads them for you: upload a vendor contract or a customer agreement and it flags the risky clauses, explains why, and tells you whether to sign, push back, or send it to a lawyer.
 
-**Who it's for**: an operations/finance manager at a small company with no
-in-house legal counsel, who currently either reads every incoming vendor
-contract or outgoing customer agreement line-by-line, or pastes it into
-ChatGPT ad hoc with no consistent checklist. See
-[docs/CASE_STUDY.md](docs/CASE_STUDY.md) for the full assumed-user writeup
-(this was built against synthetic/public-template contracts, not a real
-company's paper — that assumption is stated explicitly, not hidden).
+It's built for small teams without in-house counsel — the kind of place where contract review currently means either skimming the whole thing or pasting it into ChatGPT and hoping for the best.
 
-## What it does
+## What it checks
 
-Upload or paste a contract (`.txt`, `.docx`, or `.pdf`). ClauseGuard checks
-it against a 10-category playbook (auto-renewal, liability caps,
-indemnification, payment terms, IP ownership, confidentiality, governing
-law, data privacy, assignment, non-compete) and returns:
+Every contract runs against a fixed playbook covering the stuff that actually bites people:
 
-- A risk level (Low / Medium / High / Critical) **per clause**, with the
-  exact excerpt and the reason it's flagged
-- A **next action**: Approve, Approve with conditions, Negotiate, or
-  Escalate to legal
-- A suggested redline for anything Medium risk or above
-- A **Chat tab** to ask plain-English questions about that specific
-  contract, grounded in its actual text
-- Full contract history, with one-click delete when you're done with one
+- Auto-renewal clauses with no real opt-out window
+- Uncapped or one-sided liability
+- Indemnification that only runs one way
+- Payment terms, IP ownership, confidentiality, governing law, data privacy, assignment, non-compete
 
-Every finding traces back to a specific, inspectable rule — this is not a
-black box. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for why.
+Each finding comes with a risk level (Low / Medium / High / Critical), the exact excerpt that triggered it, a recommended next action, and — for anything Medium or above — a suggested redline. You can also ask it questions about a specific contract in plain English and it'll answer from the actual text, not a guess.
 
-Multi-user accounts (sign up, log in), a **Playbook** tab showing exactly
-what's checked for, and per-contract **Summary / Clauses / Chat** tabs are
-all built in — see [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+Detection is rule-based, not model-based, so every flag traces back to something you can inspect. The LLM (Gemini) only gets used for writing prose — redlines and chat answers — never for deciding what counts as risky.
 
-## Quick start (three steps)
+## Running it
 
 ```bash
-git clone <this repo> && cd clauseguard
-cp backend/.env.example backend/.env   # add a GEMINI_API_KEY if you have one -- optional, see below
+git clone https://github.com/Aduda-Shem/clauseguard.git
+cd clauseguard
+cp backend/.env.example backend/.env
 docker-compose up
 ```
 
-Then open **http://localhost:5174** and sign up (no email verification —
-pick any username/password, 8+ characters). Every contract you review is
-private to your account.
+Open http://localhost:5174, sign up with any username and password (8+ characters, no email verification), and start uploading contracts. Everything's scoped to your account.
 
-No API key is required to run the full pipeline — risk detection is 100%
-rule-based. Without a key, redline/chat suggestions come from deterministic
-templates instead of a live LLM call; with one, ClauseGuard uses Google
-Gemini — see "What's real vs simulated" in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+A `GEMINI_API_KEY` in `backend/.env` is optional. Without one, redlines and chat fall back to deterministic templates instead of a live model call — risk detection works the same either way.
 
-## Repository layout
+## Layout
 
 ```
-backend/    Django + DRF API (Knox token auth), rule-based clause analyzer, eval harness
-frontend/   React + React Query UI
-docs/       Architecture, evaluation results, case study, runbook, AI notes
-docker-compose.yml   db (Postgres) + backend (Django) + frontend (React)
+backend/    Django + DRF API, Knox auth, the rule-based analyzer, eval harness
+frontend/   React + React Query
+docker-compose.yml   Postgres + backend + frontend
 ```
 
-## Documentation
+More backend-specific notes live in [backend/README.md](backend/README.md).
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) -- system design, data flow, schemas, trade-offs
-- [docs/EVALUATION.md](docs/EVALUATION.md) -- test set, baseline comparison, failure analysis
-- [docs/CASE_STUDY.md](docs/CASE_STUDY.md) -- problem, scope, results, next iteration
-- [docs/AI_COLLABORATION_NOTE.md](docs/AI_COLLABORATION_NOTE.md) -- how AI was used to build this
-- [docs/USER_GUIDE.md](docs/USER_GUIDE.md) -- for the person reviewing contracts day-to-day
-- [docs/RUNBOOK.md](docs/RUNBOOK.md) -- operator guide: running it, maintaining the playbook, troubleshooting
-- [docs/SPRINT_SELF_ASSESSMENT.md](docs/SPRINT_SELF_ASSESSMENT.md) -- honest scoring against the sprint brief, gaps included
-- [backend/README.md](backend/README.md) -- backend-specific dev notes
+## What it's not
 
-## Non-goals (v1)
-
-Not a substitute for a lawyer's sign-off on high-value/high-risk deals; no
-legal advice; English-language contracts only; no multi-party or
-amendment/redline-diffing support; no CLM/e-signature integration. See
-docs/CASE_STUDY.md for the full scope discussion and next-iteration plan.
+Not a replacement for a lawyer on anything high-value or high-risk. Doesn't give legal advice, doesn't handle multi-party contracts or redline-diffing, doesn't integrate with a CLM or e-signature platform yet. English-language commercial contracts only.
