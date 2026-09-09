@@ -1,0 +1,163 @@
+import io
+from datetime import datetime, timezone
+from xml.sax.saxutils import escape
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import LETTER
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Flowable, HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+RISK_HEX = {
+    "Critical": "#A3392C",
+    "High": "#B56418",
+    "Medium": "#8F6C0C",
+    "Low": "#2F6B47",
+}
+
+NEXT_ACTION_LABELS = {
+    "APPROVE": "Approve",
+    "APPROVE_WITH_CONDITIONS": "Approve with conditions",
+    "NEGOTIATE": "Negotiate before signing",
+    "ESCALATE": "Escalate to legal",
+}
+
+RULE_COLOR = colors.HexColor("#E4DAC2")
+TABLE_HEADER_BG = colors.HexColor("#EEE4CF")
+
+
+def _styles():
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="CGTitle", fontSize=18, leading=22, textColor=colors.HexColor("#221D14")))
+    styles.add(ParagraphStyle(name="CGMeta", fontSize=9, leading=13, textColor=colors.HexColor("#6D6252")))
+    styles.add(
+        ParagraphStyle(
+            name="CGH2", fontSize=13, leading=16, spaceBefore=14, spaceAfter=6, textColor=colors.HexColor("#221D14")
+        )
+    )
+    styles.add(ParagraphStyle(name="CGBody", fontSize=10, leading=14, textColor=colors.HexColor("#221D14")))
+    styles.add(ParagraphStyle(name="CGSmall", fontSize=8.5, leading=12, textColor=colors.HexColor("#6D6252")))
+    return styles
+
+
+def _rule(space_before: int, space_after: int) -> HRFlowable:
+    return HRFlowable(width="100%", color=RULE_COLOR, thickness=0.75, spaceBefore=space_before, spaceAfter=space_after)
+
+
+def _risk_span(risk_level: str, suffix: str = "", bold: bool = True) -> str:
+    text = f'<font color="{RISK_HEX.get(risk_level, "#221D14")}">{escape(risk_level)}{suffix}</font>'
+    return f"<b>{text}</b>" if bold else text
+
+
+def _header_flowables(contract, result, styles) -> list[Flowable]:
+    engine_label = "Rule-based + LLM redlines" if result.engine_mode == "LLM_ENHANCED" else "Rule-based only"
+    action_label = NEXT_ACTION_LABELS.get(result.next_action, result.next_action)
+    return [
+        Paragraph("ClauseGuard &mdash; Contract Risk Report", styles["CGTitle"]),
+        Spacer(1, 4),
+        Paragraph(
+            f"{escape(contract.filename or f'Contract #{contract.id}')} &middot; "
+            f"reviewed {result.created_at.strftime('%B %d, %Y at %H:%M UTC')} &middot; {engine_label}",
+            styles["CGMeta"],
+        ),
+        Spacer(1, 12),
+        Table(
+            [
+                [
+                    Paragraph(_risk_span(result.overall_risk, suffix=" risk"), styles["CGBody"]),
+                    Paragraph(f"<b>Recommended action:</b> {escape(action_label)}", styles["CGBody"]),
+                ]
+            ],
+            colWidths=[2.1 * inch, 3.9 * inch],
+        ),
+        Spacer(1, 10),
+        Paragraph(escape(result.summary), styles["CGBody"]),
+        _rule(14, 4),
+    ]
+
+
+def _flagged_table(findings, styles) -> Table:
+    rows = [["Category", "Risk", "Finding & suggested redline"]]
+    for f in findings:
+        cell = f"<b>{escape(f.reason)}</b>"
+        if f.redline_suggestion:
+            cell += f"<br/><i>Suggested redline:</i> {escape(f.redline_suggestion)}"
+        rows.append(
+            [
+                Paragraph(escape(f.category), styles["CGBody"]),
+                Paragraph(_risk_span(f.risk_level), styles["CGBody"]),
+                Paragraph(cell, styles["CGSmall"]),
+            ]
+        )
+    table = Table(rows, colWidths=[1.1 * inch, 0.9 * inch, 4.0 * inch], repeatRows=1)
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), TABLE_HEADER_BG),
+                ("GRID", (0, 0), (-1, -1), 0.5, RULE_COLOR),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
+    return table
+
+
+def _missing_flowables(findings, styles) -> list[Flowable]:
+    flowables = [Paragraph("Possibly missing from this contract", styles["CGH2"])]
+    for f in findings:
+        flowables.append(
+            Paragraph(
+                f"&bull; <b>{escape(f.category)}</b> [{_risk_span(f.risk_level, bold=False)}] "
+                f"&mdash; {escape(f.reason)}",
+                styles["CGBody"],
+            )
+        )
+        flowables.append(Spacer(1, 4))
+    return flowables
+
+
+def _footer_flowables(styles) -> list[Flowable]:
+    generated_at = datetime.now(timezone.utc).strftime("%B %d, %Y at %H:%M UTC")
+    return [
+        _rule(16, 8),
+        Paragraph(
+            "This report is an AI-assisted recommendation, not legal advice. ClauseGuard never signs, sends, "
+            "or auto-approves anything on its own — a qualified human makes the final Approve, Negotiate, or "
+            f"Escalate decision. Generated by ClauseGuard on {generated_at}.",
+            styles["CGSmall"],
+        ),
+    ]
+
+
+def build_review_pdf(contract) -> bytes:
+    """Render a contract's review as a downloadable PDF: the audit-trail record a
+    human can attach to their own Approve/Negotiate/Escalate decision -- see
+    docs/CASE_STUDY.md's "no audit trail" bottleneck."""
+    result = contract.review_result
+    styles = _styles()
+    findings = list(result.findings.all())
+    flagged = [f for f in findings if not f.is_missing]
+    missing = [f for f in findings if f.is_missing]
+
+    story = _header_flowables(contract, result, styles)
+    if flagged:
+        story.append(Paragraph("Flagged clauses", styles["CGH2"]))
+        story.append(_flagged_table(flagged, styles))
+    if missing:
+        story.extend(_missing_flowables(missing, styles))
+    story.extend(_footer_flowables(styles))
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=LETTER,
+        topMargin=0.75 * inch,
+        bottomMargin=0.75 * inch,
+        leftMargin=0.75 * inch,
+        rightMargin=0.75 * inch,
+        title=f"ClauseGuard report - {contract.filename or contract.id}",
+    )
+    doc.build(story)
+    return buffer.getvalue()

@@ -1,0 +1,226 @@
+[
+  {
+    "key": "auto-renewal",
+    "name": "Auto-renewal / termination notice",
+    "category": "Auto-renewal",
+    "order": 1,
+    "detection_pattern": "(?<!no )(?<!not )auto(?:matic(?:ally)?)?\\s+renew|renewal\\s+term|evergreen",
+    "risk_rules": [
+      {
+        "pattern": "evergreen|indefinitely renew|no notice|without notice",
+        "risk": "Critical",
+        "reason": "Contract renews automatically with no clear notice window or opt-out mechanism, risking indefinite lock-in.",
+        "redline": "Add a fixed renewal term with a required written notice period (30-60 days) to cancel before each renewal."
+      },
+      {
+        "pattern": "\\b([1-9]|[12][0-9])\\)?\\s*(calendar\\s*)?days?\\s*(prior\\s*)?(written\\s*)?notice",
+        "risk": "High",
+        "reason": "Cancellation notice window is under 30 days, making it easy to miss and get locked into another renewal term.",
+        "redline": "Extend the notice-to-cancel window to at least 30 days and require it be sent via a trackable method."
+      }
+    ],
+    "default_risk": "Medium",
+    "default_reason": "An auto-renewal clause is present; confirm the notice period and renewal term length manually.",
+    "default_redline": "Confirm the exact notice period and consider adding a reminder before each renewal deadline.",
+    "missing_risk": "Low",
+    "missing_reason": "No auto-renewal clause found -- the contract term appears fixed, which is generally lower risk."
+  },
+  {
+    "key": "liability-cap",
+    "name": "Limitation of liability",
+    "category": "Liability",
+    "order": 2,
+    "detection_pattern": "limitation\\s+of\\s+liability|liabilit(?:y|ies)|liable\\s+for",
+    "risk_rules": [
+      {
+        "pattern": "unlimited liability|no limitation on liability|shall not be limited|without limitation.{0,40}liability",
+        "exclude_pattern": "except (?:for|in cases? of)|other than (?:for|in cases? of)|excluding (?:cases? of )?(?:fraud|gross negligence|willful)",
+        "risk": "Critical",
+        "reason": "Liability is explicitly uncapped or unlimited -- a single incident could create unbounded financial exposure.",
+        "redline": "Cap total liability at a fixed multiple of fees paid (e.g. 12 months' fees) with standard carve-outs only."
+      },
+      {
+        "pattern": "exceed(?:s)?\\s+the\\s+(?:total\\s+)?(?:fees|amounts?)\\s+paid",
+        "risk": "Low",
+        "reason": "Liability is capped at fees paid, which is a standard and favorable limitation.",
+        "redline": ""
+      }
+    ],
+    "default_risk": "Medium",
+    "default_reason": "A liability clause exists but the cap amount or multiplier is unclear from the surrounding text -- verify the exact number.",
+    "default_redline": "Clarify the liability cap as a specific dollar amount or multiple of fees paid.",
+    "missing_risk": "High",
+    "missing_reason": "No limitation-of-liability clause was found -- without one, liability exposure is effectively uncapped by default in most jurisdictions."
+  },
+  {
+    "key": "indemnification",
+    "name": "Indemnification",
+    "category": "Indemnification",
+    "order": 3,
+    "detection_pattern": "indemnif(?:y|ication|ies)",
+    "risk_rules": [
+      {
+        "pattern": "sole(?:ly)? indemnif|one-?sided|sole obligation to indemnify",
+        "risk": "High",
+        "reason": "Indemnification obligation appears one-sided, exposing this party without a reciprocal obligation from the counterparty.",
+        "redline": "Make indemnification mutual so both parties bear responsibility for their own breaches, IP claims, and negligence."
+      },
+      {
+        "pattern": "mutual(?:ly)? indemnif|each party (shall|will) indemnify",
+        "risk": "Low",
+        "reason": "Indemnification is mutual, which is the standard, balanced position.",
+        "redline": ""
+      }
+    ],
+    "default_risk": "Medium",
+    "default_reason": "An indemnification clause is present; confirm whether the obligation is mutual and what it covers.",
+    "default_redline": "Confirm the indemnification is mutual and scoped to third-party IP claims, gross negligence, and confidentiality breaches.",
+    "missing_risk": "Medium",
+    "missing_reason": "No indemnification clause found -- there is no explicit allocation of responsibility for third-party claims."
+  },
+  {
+    "key": "payment-terms",
+    "name": "Payment terms",
+    "category": "Payment",
+    "order": 4,
+    "detection_pattern": "net\\s*\\d{1,3}|payment terms|invoice(?:d)?\\s+(?:within|net)",
+    "risk_rules": [
+      {
+        "pattern": "net\\s*(9[0-9]|[1-9]\\d{2,})\\b",
+        "risk": "High",
+        "reason": "Extended payment terms of 90+ days strain cash flow and are well outside typical B2B norms (net 30-45).",
+        "redline": "Negotiate payment terms down to net 30 or net 45."
+      },
+      {
+        "pattern": "net\\s*(4[6-9]|[5-8]\\d)\\b",
+        "risk": "Medium",
+        "reason": "Payment terms exceed the common net 30-45 day norm.",
+        "redline": "Consider negotiating toward net 30-45 if cash flow timing matters."
+      }
+    ],
+    "default_risk": "Low",
+    "default_reason": "Payment terms are specified and appear within normal range.",
+    "default_redline": "",
+    "missing_risk": "Medium",
+    "missing_reason": "No explicit payment terms (due date, net period) were found -- ambiguity here commonly leads to invoicing disputes."
+  },
+  {
+    "key": "ip-ownership",
+    "name": "IP ownership / work-for-hire",
+    "category": "Intellectual Property",
+    "order": 5,
+    "detection_pattern": "intellectual property|work[\\s-]for[\\s-]hire|assign(?:s|ment)?\\s+(?:all\\s+)?(?:right|title|inventions?)",
+    "risk_rules": [
+      {
+        "pattern": "irrevocably|irrevocable|in perpetuity|perpetually|worldwide",
+        "risk": "High",
+        "reason": "IP assignment language is broad (perpetual, irrevocable, and/or worldwide) -- confirm it does not extend beyond the specific deliverables under this contract.",
+        "redline": "Scope IP assignment to deliverables created specifically under this agreement, excluding pre-existing background IP and tools."
+      }
+    ],
+    "default_risk": "Low",
+    "default_reason": "An IP ownership clause is present and appears scoped to project deliverables, which is standard.",
+    "default_redline": "",
+    "missing_risk": "Low",
+    "missing_reason": "No explicit IP ownership clause found -- default statutory ownership rules would apply, confirm this is acceptable."
+  },
+  {
+    "key": "confidentiality",
+    "name": "Confidentiality",
+    "category": "Confidentiality",
+    "order": 6,
+    "detection_pattern": "confidential(?:ity)?\\s+information|confidential(?:ity)?\\s+obligations?|non-disclosure",
+    "risk_rules": [
+      {
+        "pattern": "perpetual(?:ly)?|indefinitely|no expiration",
+        "risk": "Medium",
+        "reason": "Confidentiality obligations survive perpetually/indefinitely with no defined end date.",
+        "redline": "Cap the confidentiality survival period to 3-5 years after termination, except for trade secrets."
+      }
+    ],
+    "default_risk": "Low",
+    "default_reason": "A confidentiality clause is present with a bounded scope.",
+    "default_redline": "",
+    "missing_risk": "Medium",
+    "missing_reason": "No confidentiality/non-disclosure clause was found -- sensitive information shared under this contract would have no contractual protection."
+  },
+  {
+    "key": "governing-law",
+    "name": "Governing law / venue",
+    "category": "Governing Law",
+    "order": 7,
+    "detection_pattern": "governing law|governed by the laws|exclusive jurisdiction|venue shall be",
+    "risk_rules": [],
+    "default_risk": "Low",
+    "default_reason": "A governing law and venue clause is present.",
+    "default_redline": "",
+    "missing_risk": "Medium",
+    "missing_reason": "No governing law or venue clause was found -- a dispute would default to an ambiguous or contested jurisdiction."
+  },
+  {
+    "key": "data-privacy",
+    "name": "Data privacy / breach notification",
+    "category": "Data Privacy",
+    "order": 8,
+    "detection_pattern": "data (?:privacy|protection)|personal data|breach notification|GDPR|CCPA",
+    "risk_rules": [
+      {
+        "pattern": "\\b(7[3-9]|[89]\\d|\\d{3,})\\s*hours?\\b.{0,30}(?:notif|breach)|notif.{0,30}\\b(7[3-9]|[89]\\d|\\d{3,})\\s*hours?\\b",
+        "risk": "Medium",
+        "reason": "Breach notification window exceeds the common 72-hour standard (e.g. GDPR-aligned practice).",
+        "redline": "Tighten the breach notification requirement to within 72 hours of discovery."
+      }
+    ],
+    "default_risk": "Low",
+    "default_reason": "Data privacy / breach notification obligations are present.",
+    "default_redline": "",
+    "missing_risk": "High",
+    "missing_reason": "No data privacy or breach-notification obligations were found -- a compliance and liability gap for any contract touching customer or personal data."
+  },
+  {
+    "key": "assignment",
+    "name": "Assignment / change of control",
+    "category": "Assignment",
+    "order": 9,
+    "detection_pattern": "assign(?:ment)? of this agreement|change of control|assign.{0,20}without.{0,20}consent",
+    "risk_rules": [
+      {
+        "pattern": "freely assign|without.{0,20}(?:prior\\s+)?(?:written\\s+)?consent",
+        "risk": "High",
+        "reason": "The counterparty may assign this contract to a third party without requiring your consent.",
+        "redline": "Require prior written consent (not to be unreasonably withheld) before either party can assign the contract."
+      }
+    ],
+    "default_risk": "Low",
+    "default_reason": "An assignment clause is present and appears to require consent.",
+    "default_redline": "",
+    "missing_risk": "Low",
+    "missing_reason": "No assignment / change-of-control clause found -- default statutory assignment rules would apply."
+  },
+  {
+    "key": "non-compete",
+    "name": "Non-compete / non-solicit",
+    "category": "Restrictive Covenants",
+    "order": 10,
+    "detection_pattern": "non[\\s-]compete|non[\\s-]solicit(?:ation)?",
+    "risk_rules": [
+      {
+        "pattern": "world\\s*wide|globally|anywhere in the world",
+        "risk": "High",
+        "reason": "The restrictive covenant applies worldwide with no geographic limitation, which is unusually broad and may be unenforceable while still chilling behavior.",
+        "redline": "Limit the geographic scope to the specific markets/territories where the business actually operates."
+      },
+      {
+        "pattern": "\\b([3-9]|\\d{2,})\\s*years?\\b",
+        "risk": "High",
+        "reason": "The restrictive covenant duration exceeds 2 years, longer than what is typically enforceable or reasonable.",
+        "redline": "Shorten the non-compete/non-solicit duration to 12-24 months."
+      }
+    ],
+    "default_risk": "Medium",
+    "default_reason": "A non-compete/non-solicit clause is present; confirm its duration and geographic scope are reasonable.",
+    "default_redline": "Confirm duration (ideally <=2 years) and geographic scope are narrowly tailored.",
+    "missing_risk": "Low",
+    "missing_reason": "No non-compete/non-solicit clause found."
+  }
+]

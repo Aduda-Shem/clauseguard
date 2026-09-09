@@ -1,0 +1,124 @@
+[
+  {
+    "id": "01_clean_saas_msa",
+    "file": "01_clean_saas_msa.txt",
+    "category": "representative",
+    "description": "Well-negotiated MSA, no risky clauses -- the happy path.",
+    "expected_overall_risk": "Low",
+    "expected_next_action": "APPROVE",
+    "must_flag": []
+  },
+  {
+    "id": "02_critical_uncapped_liability",
+    "file": "02_critical_uncapped_liability.txt",
+    "category": "failure",
+    "description": "Unlimited liability clause planted -- the single most important thing to never miss.",
+    "expected_overall_risk": "Critical",
+    "expected_next_action": "ESCALATE",
+    "must_flag": [{"rule_key": "liability-cap", "min_risk": "Critical"}]
+  },
+  {
+    "id": "03_evergreen_autorenewal",
+    "file": "03_evergreen_autorenewal.txt",
+    "category": "failure",
+    "description": "Evergreen auto-renewal with no notice mechanism.",
+    "expected_overall_risk": "Critical",
+    "expected_next_action": "ESCALATE",
+    "must_flag": [{"rule_key": "auto-renewal", "min_risk": "Critical"}]
+  },
+  {
+    "id": "04_short_notice_renewal",
+    "file": "04_short_notice_renewal.txt",
+    "category": "edge",
+    "description": "Auto-renewal with only a 10-day notice window -- High, not Critical.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [{"rule_key": "auto-renewal", "min_risk": "High"}]
+  },
+  {
+    "id": "05_net90_payment",
+    "file": "05_net90_payment.txt",
+    "category": "representative",
+    "description": "Net 90 payment terms strain cash flow.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [{"rule_key": "payment-terms", "min_risk": "High"}]
+  },
+  {
+    "id": "06_onesided_indemnification",
+    "file": "06_onesided_indemnification.txt",
+    "category": "representative",
+    "description": "One-sided indemnification obligation.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [{"rule_key": "indemnification", "min_risk": "High"}]
+  },
+  {
+    "id": "07_worldwide_noncompete",
+    "file": "07_worldwide_noncompete.txt",
+    "category": "edge",
+    "description": "Worldwide, 5-year non-compete -- unusually broad in both scope and duration.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [{"rule_key": "non-compete", "min_risk": "High"}]
+  },
+  {
+    "id": "08_missing_liability_and_privacy",
+    "file": "08_missing_liability_and_privacy.txt",
+    "category": "edge",
+    "description": "Short, informal vendor agreement that simply omits a liability cap and any data privacy language -- tests detection of absence, not just presence.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [
+      {"rule_key": "liability-cap", "min_risk": "High"},
+      {"rule_key": "data-privacy", "min_risk": "High"}
+    ]
+  },
+  {
+    "id": "09_perpetual_confidentiality",
+    "file": "09_perpetual_confidentiality.txt",
+    "category": "edge",
+    "description": "Only a Medium-severity issue (perpetual confidentiality) -- tests the APPROVE_WITH_CONDITIONS path, not just APPROVE/NEGOTIATE/ESCALATE.",
+    "expected_overall_risk": "Medium",
+    "expected_next_action": "APPROVE_WITH_CONDITIONS",
+    "must_flag": [{"rule_key": "confidentiality", "min_risk": "Medium"}]
+  },
+  {
+    "id": "10_broad_ip_assignment",
+    "file": "10_broad_ip_assignment.txt",
+    "category": "representative",
+    "description": "IP assignment clause reaching beyond project deliverables to any work product, perpetually and worldwide.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [{"rule_key": "ip-ownership", "min_risk": "High"}]
+  },
+  {
+    "id": "11_gibberish_no_clauses",
+    "file": "11_gibberish_no_clauses.txt",
+    "category": "failure",
+    "description": "Not a contract at all (meeting notes) -- must not crash, and should report every category as missing rather than hallucinate a finding.",
+    "expected_overall_risk": "High",
+    "expected_next_action": "NEGOTIATE",
+    "must_flag": [
+      {"rule_key": "liability-cap", "min_risk": "High"},
+      {"rule_key": "data-privacy", "min_risk": "High"}
+    ]
+  },
+  {
+    "id": "12_corrupted_pdf",
+    "file": "12_corrupted_pdf.pdf",
+    "category": "failure",
+    "description": "Deliberately corrupted PDF -- must fail with a clear, non-developer-friendly 400 error, not a 500 crash.",
+    "expect_http_error": true,
+    "expected_status_range": [400, 499]
+  },
+  {
+    "id": "13_fraud_carveout_liability",
+    "file": "13_fraud_carveout_liability.txt",
+    "category": "adversarial",
+    "description": "Standard 'liability uncapped only for fraud/gross negligence' carve-out -- adversarial probe added during Day 4 hardening after this exact phrasing produced a false-positive Critical finding. See docs/EVALUATION.md failure case #1.",
+    "expected_overall_risk": "Low",
+    "expected_next_action": "APPROVE",
+    "must_flag": [{"rule_key": "liability-cap", "min_risk": "Low", "max_risk": "Low"}]
+  }
+]

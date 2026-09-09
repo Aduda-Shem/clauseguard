@@ -1,0 +1,42 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("Agreement") is entered into between Acme
+Vendor Inc. ("Vendor") and Customer Co. ("Customer").
+
+1. TERM. This Agreement has a fixed term of twelve (12) months from the
+Effective Date and does not renew automatically. Either party may negotiate
+a new term in writing before expiration.
+
+2. LIMITATION OF LIABILITY. Except for breaches of confidentiality, IP
+infringement, or gross negligence, each party's total liability under this
+Agreement shall not exceed the total fees paid in the twelve (12) months
+preceding the claim.
+
+3. INDEMNIFICATION. Each party shall indemnify, defend, and hold harmless
+the other party from third-party claims arising from its own breach of this
+Agreement or grossly negligent acts. This indemnification obligation is
+mutual.
+
+4. PAYMENT TERMS. Customer shall pay all invoices within thirty (30) days
+of receipt (net 30). Late payments accrue interest at 1% per month.
+
+5. INTELLECTUAL PROPERTY. Vendor retains ownership of all pre-existing and
+background intellectual property. Deliverables created specifically for
+Customer under a Statement of Work are assigned to Customer upon full
+payment.
+
+6. CONFIDENTIALITY. Each party shall protect the other's confidential
+information using reasonable care. Confidentiality obligations survive for
+three (3) years following termination of this Agreement.
+
+7. GOVERNING LAW. This Agreement is governed by the laws of the State of
+Delaware, and the parties consent to the exclusive jurisdiction of its
+courts.
+
+8. DATA PRIVACY. Vendor shall implement reasonable administrative and
+technical safeguards for any personal data processed under this Agreement,
+and shall notify Customer of any data breach within seventy-two (72) hours
+of discovery, consistent with applicable data protection law.
+
+9. ASSIGNMENT. Neither party may assign this Agreement without the prior
+written consent of the other party, not to be unreasonably withheld.
