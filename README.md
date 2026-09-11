@@ -21,18 +21,18 @@ Detection is rule-based, not model-based, so every flag traces back to something
 
 ```mermaid
 flowchart TD
-    A[Contract uploaded or pasted] --> B[Text extracted from .txt / .docx / .pdf]
-    B --> C[Checked against every active playbook rule]
-    C --> D{Medium+ risk found?}
-    D -- yes --> E[Gemini drafts redlines + summary\nfalls back to canned templates if no key / call fails]
-    D -- no --> F[Plain-text summary, no model call]
-    E --> G[Findings + summary saved]
+    A[Upload contract] --> B[Extract text]
+    B --> C[Run playbook rules]
+    C --> D{Risk found?}
+    D -- yes --> E[Gemini writes redline\nfalls back to template]
+    D -- no --> F[Plain summary]
+    E --> G[Save results]
     F --> G
-    G --> H[Summary / Clauses tabs]
-    G --> I[Downloadable PDF report]
-    H --> J[Ask a question in Chat]
-    J --> K[Answered from that contract's text + findings\nGemini, falls back to keyword search]
-    H --> L[Human approves, negotiates, or escalates]
+    G --> H[View tabs]
+    G --> I[Download PDF]
+    H --> J[Ask chat]
+    J --> K[Answer from text\nfalls back to keyword search]
+    H --> L[Human decides]
 
     style D fill:#f5f0e6,stroke:#8a7a5c
     style L fill:#e9f2ea,stroke:#3c7a5c
