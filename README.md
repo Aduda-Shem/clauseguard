@@ -52,13 +52,3 @@ docker-compose up
 Open http://localhost:5174, sign up with any username and password (8+ characters, no email verification), and start uploading contracts. Everything's scoped to your account.
 
 A `GEMINI_API_KEY` in `backend/.env` is optional. Without one, redlines and chat fall back to deterministic templates instead of a live model call — risk detection works the same either way.
-
-## Layout
-
-```
-backend/    Django + DRF API, Knox auth, the rule-based analyzer, eval harness
-frontend/   React + React Query
-docker-compose.yml   Postgres + backend + frontend
-```
-
-More backend-specific notes live in [backend/README.md](backend/README.md).
