@@ -1,54 +1,79 @@
 # ClauseGuard
 
-Contracts pile up faster than anyone wants to read them line by line. ClauseGuard reads them for you: upload a vendor contract or a customer agreement and it flags the risky clauses, explains why, and tells you whether to sign, push back, or send it to a lawyer.
+ClauseGuard is a contract review tool for small teams without in-house legal support.
 
-It's built for small teams without in-house counsel — the kind of place where contract review currently means either skimming the whole thing or pasting it into ChatGPT and hoping for the best.
+Upload a contract and ClauseGuard checks it for common risks, explains the issue, and suggests whether to **sign, negotiate, or escalate**.
 
 ## What it checks
 
-Every contract runs against a fixed playbook covering the stuff that actually bites people:
+ClauseGuard uses a fixed rule-based playbook covering:
 
-- Auto-renewal clauses with no real opt-out window
-- Uncapped or one-sided liability
-- Indemnification that only runs one way
-- Payment terms, IP ownership, confidentiality, governing law, data privacy, assignment, non-compete
+- Auto-renewal and notice periods
+- Liability and indemnification
+- Payment terms
+- IP ownership and confidentiality
+- Data privacy
+- Assignment
+- Governing law
+- Non-compete clauses
 
-Each finding comes with a risk level (Low / Medium / High / Critical), the exact excerpt that triggered it, a recommended next action, and — for anything Medium or above — a suggested redline. You can also ask it questions about a specific contract in plain English and it'll answer from the actual text, not a guess.
+Each finding includes:
 
-Detection is rule-based, not model-based, so every flag traces back to something you can inspect. The LLM (Gemini) only gets used for writing prose — redlines and chat answers — never for deciding what counts as risky.
+- Risk level: Low, Medium, High, or Critical
+- The relevant contract text
+- Why it was flagged
+- Recommended next action
+- Suggested redline for Medium+ risks
+
+You can also ask questions about the contract using plain English.
 
 ## How it works
 
-```mermaid
-flowchart TD
-    A[Upload contract] --> B[Extract text]
-    B --> C[Run playbook rules]
-    C --> D{Risk found?}
-    D -- yes --> E[Gemini writes redline\nfalls back to template]
-    D -- no --> F[Plain summary]
-    E --> G[Save results]
-    F --> G
-    G --> H[View tabs]
-    G --> I[Download PDF]
-    H --> J[Ask chat]
-    J --> K[Answer from text\nfalls back to keyword search]
-    H --> L[Human decides]
-
-    style D fill:#f5f0e6,stroke:#8a7a5c
-    style L fill:#e9f2ea,stroke:#3c7a5c
+```text
+Upload contract
+      ↓
+Extract text
+      ↓
+Run risk rules
+      ↓
+Generate findings
+      ↓
+Save results
+      ↓
+Review and decide
 ```
 
-Detection never touches the network — it's regex against a rule table, so it's the same speed and the same answer every time. The model only shows up where the job is writing sentences, and the actual sign/negotiate/escalate call always stays with a person.
+Risk detection is **rule-based**, so the same contract produces consistent results.
 
-## Running it
+Gemini is only used for generating redlines and answering contract questions. If Gemini is unavailable, the system falls back to templates.
+
+## Tech Stack
+
+- **Frontend:** React
+- **Backend:** Django
+- **Database:** PostgreSQL
+- **AI:** Gemini
+- **Deployment:** Docker + Nginx
+
+## Running Locally
 
 ```bash
 git clone https://github.com/Aduda-Shem/clauseguard.git
 cd clauseguard
+
 cp backend/.env.example backend/.env
+
 docker-compose up
 ```
 
-Open http://localhost:5174, sign up with any username and password (8+ characters, no email verification), and start uploading contracts. Everything's scoped to your account.
+Open:
 
-A `GEMINI_API_KEY` in `backend/.env` is optional. Without one, redlines and chat fall back to deterministic templates instead of a live model call — risk detection works the same either way.
+```text
+http://localhost:5174
+```
+
+A `GEMINI_API_KEY` is optional. Without it, risk detection still works using the rule engine, while redlines and chat use fallback templates.
+
+## Important Note
+
+ClauseGuard is a **first-pass contract review tool**, not a replacement for legal advice. The final decision should always be made by a qualified person when needed.
