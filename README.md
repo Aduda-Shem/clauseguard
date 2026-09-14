@@ -73,7 +73,3 @@ http://localhost:5174
 ```
 
 A `GEMINI_API_KEY` is optional. Without it, risk detection still works using the rule engine, while redlines and chat use fallback templates.
-
-## Important Note
-
-ClauseGuard is a **first-pass contract review tool**, not a replacement for legal advice. The final decision should always be made by a qualified person when needed.
